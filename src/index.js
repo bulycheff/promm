@@ -1,5 +1,5 @@
 import './styles/styles.css'
-import GlbFile from './assets/models/scene.glb'
+import smazkasystem from './assets/models/gaztank2.gltf'
 import GltfFile from './assets/models/machine.gltf'
 import hdrFile from '@assets/hdr/industrial_pipe_and_valve_01_1k.hdr'
 import * as THREE from 'three'
@@ -23,7 +23,7 @@ import {
 import * as dat from 'dat.gui'
 
 
-var container, stats, controls;
+var container, canvasjs, stats, controls;
 var camera, scene, renderer, rgbeLoader;
 let head, bridge, laserhead;
 
@@ -53,7 +53,18 @@ animate();
 function init() {
 
     container = document.createElement('div');
+    container.width = 800 * window.devicePixelRatio;
+    // canvasjs = document.getElementById('canvasjs');
+    // container.id = "threescene";
     document.body.appendChild(container);
+    container.class = "sceneididid"
+    console.info(container.class)
+    console.info(document.body)
+    console.info(window)
+    console.info(window.inn)
+    console.info('container.id: ', container.id)
+    console.info(container.innerHTML)
+    
 
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.25, 100);
     camera.position.set(5, 6, 11);
@@ -90,6 +101,8 @@ function init() {
 
             scene.add(gltf.scene);
 
+            console.info('gltf.scene: ', gltf.scene)
+
             roughnessMipmapper.dispose();
 
             head = gltf.scene.getObjectByName('head');
@@ -101,6 +114,15 @@ function init() {
             console.log('Dump Obj bridge ...', dumpObject(bridge).join('\n'));
 
             laserhead = gltf.scene.getObjectByName('LCM_laserhead_low');
+
+            var baloooon = gltf.scene.getObjectByName('LCM_gas_tank_low');
+            console.info('LCM_gas_tank_low INFO')
+            console.info(baloooon.getWorldPosition())
+            console.info(baloooon.getWorldQuaternion())
+            console.info(baloooon.getWorldScale())
+            console.info(baloooon.getWorldDirection())
+            console.info(baloooon.toJSON())
+
 
             //----------------------------------------------------------------------------------------
 
@@ -115,9 +137,6 @@ function init() {
             fldr = datGui.addFolder('LASER HEAD');
             fldr.add(laserhead.position, 'y', -.07, 0, .001);
             fldr.open();
-
-            console.info('datGui.__controllers:', datGui.__controllers)
-            console.info('datGui.__folders:', datGui.__folders)
 
             const moveHeadGUI = {
                 "move head": () => {
@@ -432,7 +451,67 @@ function init() {
 
             }
 
+            fldr = datGui.addFolder('LIGHT');
+
+            var lightcolor = '#FF0000';
+            var sphere = new THREE.SphereBufferGeometry( 0.01, 16, 16 );
+            var spherematerial = new THREE.MeshBasicMaterial( { color: lightcolor } );
+            var light1 = new THREE.PointLight(lightcolor, 10, 100000 );
+            light1.add( new THREE.Mesh( sphere, spherematerial ) );
+            // sphere.position = {x: 0, y: 1, z: 0.3};
+            
+            scene.add( light1 );
+            console.info('light1.getWorldPosition: ', light1.getWorldPosition())
+
+            light1.position.y = .94;
+            light1.position.z = .21;
+            console.info('light1.getWorldPosition: ', light1.getWorldPosition())
+
+            
+            fldr.add(light1.position, 'x', -.7, .7, .01);
+            fldr.add(light1.position, 'y', .5, 1.5, .01);
+            fldr.add(light1.position, 'z', -1.1, 1.9, .01);
+            var colparams = {lightcolor: '#FF0000'};
+            fldr.addColor(colparams, 'lightcolor')
+                .name('LIGHT')
+                .onChange(function() {
+                    light1.color.set(colparams.lightcolor);
+                    spherematerial.color.set(colparams.lightcolor);
+                })
+            // window.onload = function() {
+            //     fldr.addColor(light1, 'color');
+            // }()
+
+            
+            console.info('light1.color')
+            console.info(light1.color.setRGB)
+
+            fldr.add(light1, 'visible', false);
+            fldr.open();
+
+            
+            
+
+
         });
+
+        // var loader2 = new GLTFLoader();
+        // loader2.load(smazkasystem, function(gltf2) {
+            
+        //     scene.add(gltf2.scene);
+        //     console.log('gltf2.scene: ', gltf2.scene)
+        //     var smz = gltf2.scene.getObjectByName('LCM_gas_tank_low001')
+
+        //     var fldr = datGui.addFolder('SMAZKA');
+        //     fldr.add(smz.position, 'x', -100, 100, 1);
+        //     fldr.add(smz.position, 'y', -100, 100, 1);
+        //     fldr.add(smz.position, 'z', -100, 100, 1);
+        //     fldr.add(smz.scale, 'x', 0, 1, .001);
+        //     fldr.add(smz.scale, 'y', 0, 1, .001);
+        //     fldr.add(smz.scale, 'z', 0, 1, .001);
+        //     fldr.open();
+        // })
+
 
     });
 
