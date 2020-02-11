@@ -39,7 +39,14 @@ init();
 
 datGui.domElement.id = 'gui';
 
-
+function updateDisplay(datGui) {
+    for (var i in datGui.__controllers) {
+        datGui.__controllers[i].updateDisplay();
+    }
+    for (var f in datGui.__folders) {
+        updateDisplay(datGui.__folders[f]);
+    }
+}
 
 animate();
 
@@ -108,6 +115,9 @@ function init() {
             fldr = datGui.addFolder('LASER HEAD');
             fldr.add(laserhead.position, 'y', -.07, 0, .001);
             fldr.open();
+
+            console.info('datGui.__controllers:', datGui.__controllers)
+            console.info('datGui.__folders:', datGui.__folders)
 
             const moveHeadGUI = {
                 "move head": () => {
@@ -277,6 +287,7 @@ function init() {
 
                         if ((Math.abs(bridge.position.z - z).toFixed(2) >= deltaZ) || (Math.abs(head.position.x - x).toFixed(2) >= deltaX)) {
 
+                            updateDisplay(datGui);
                             requestAnimationFrame(MoveHead);
 
                         } else {
@@ -322,6 +333,7 @@ function init() {
 
                         if (((Math.abs(head.position.x - x) > Math.abs(deltaX)) && (deltaX != 0)) || ((Math.abs(bridge.position.z - z) > Math.abs(deltaZ)) && (deltaZ != 0))) {
 
+                            updateDisplay(datGui);
                             requestAnimationFrame(DrawLineStep)
 
                         } else {
@@ -367,6 +379,7 @@ function init() {
 
                         if (Math.abs(laserhead.position.y - y) >= deltaY) {
 
+                            updateDisplay(datGui);
                             requestAnimationFrame(MoveLaserHead);
 
                         } else {
@@ -462,6 +475,7 @@ function onWindowResize() {
 
 function animate() {
 
+    updateDisplay(datGui);
     requestAnimationFrame(animate);
     renderer.render(scene, camera);
     controls.update();
