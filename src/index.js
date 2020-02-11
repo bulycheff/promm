@@ -64,7 +64,7 @@ function init() {
     console.info(window.inn)
     console.info('container.id: ', container.id)
     console.info(container.innerHTML)
-    
+
 
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.25, 100);
     camera.position.set(5, 6, 11);
@@ -115,23 +115,35 @@ function init() {
 
             laserhead = gltf.scene.getObjectByName('LCM_laserhead_low');
 
-            var baloooon = gltf.scene.getObjectByName('LCM_gas_tank_low');
-            console.info('LCM_gas_tank_low INFO')
-            console.info(baloooon.getWorldPosition())
-            console.info(baloooon.getWorldQuaternion())
-            console.info(baloooon.getWorldScale())
-            console.info(baloooon.getWorldDirection())
-            console.info(baloooon.toJSON())
+            // var baloooon = gltf.scene.getObjectByName('LCM_gas_tank_low');
+            // console.info('LCM_gas_tank_low INFO')
+            // console.info(baloooon.getWorldPosition())
+            // console.info(baloooon.getWorldQuaternion())
+            // console.info(baloooon.getWorldScale())
+            // console.info(baloooon.getWorldDirection())
+            // console.info(baloooon.toJSON())
+
+
+            //создание света от сварки
+            var weld = new weldingLight('#EDD175');
+            weld.visible(1);
+            weld.addGUI();
 
 
             //----------------------------------------------------------------------------------------
 
             fldr = datGui.addFolder('BRIDGE');
-            fldr.add(bridge.position, 'z', -1.1, 1.9, .01);
+            var bridgeController = fldr.add(bridge.position, 'z', -1.1, 1.9, .01);
+            // bridgeController.onChange(() => {
+            //     weld.setPositionXZ(head.position.x, bridge.position.z)
+            // })
             fldr.open();
 
             let fldr = datGui.addFolder('HEAD');
-            fldr.add(head.position, 'x', -.7, .7, .01);
+            var headController = fldr.add(head.position, 'x', -.7, .7, .01);
+            // headController.onChange(() => {
+            //     weld.setPositionXZ(head.position.x, bridge.position.z)
+            // })
             fldr.open();
 
             fldr = datGui.addFolder('LASER HEAD');
@@ -160,7 +172,7 @@ function init() {
                     let strtx = xpos;
                     let strtz = -.95;
                     let sidel = .11;
-                    
+
                     DrawSquare(strtx, strtz, sidel)
                         .then(() => {
                             strtx += (sidel + .02)
@@ -304,6 +316,8 @@ function init() {
 
                         head.position.x = Math.round(head.position.x * 100) / 100;
 
+                        // weld.setPositionXZ(head.position.x, bridge.position.z);
+
                         if ((Math.abs(bridge.position.z - z).toFixed(2) >= deltaZ) || (Math.abs(head.position.x - x).toFixed(2) >= deltaX)) {
 
                             updateDisplay(datGui);
@@ -396,13 +410,19 @@ function init() {
 
                         laserhead.position.y = Math.round(laserhead.position.y * rnDeltaY) / rnDeltaY;
 
+                        if ( laserhead.position.y <= -.065 ) {
+                            weld.visible(1)
+                        } else if (laserhead.position.y > -.065) {
+                            weld.visible(0)
+                        }
+
                         if (Math.abs(laserhead.position.y - y) >= deltaY) {
 
                             updateDisplay(datGui);
                             requestAnimationFrame(MoveLaserHead);
 
                         } else {
-                            
+
                             laserhead.position.y = y;
 
                             resolve();
@@ -413,7 +433,9 @@ function init() {
 
                     MoveLaserHead();
 
-                })
+                });
+
+                
 
             }
 
@@ -451,53 +473,83 @@ function init() {
 
             }
 
-            fldr = datGui.addFolder('LIGHT');
+            function weldingLight(color) {
 
-            var lightcolor = '#FF0000';
-            var sphere = new THREE.SphereBufferGeometry( 0.01, 16, 16 );
-            var spherematerial = new THREE.MeshBasicMaterial( { color: lightcolor } );
-            var light1 = new THREE.PointLight(lightcolor, 10, 100000 );
-            light1.add( new THREE.Mesh( sphere, spherematerial ) );
-            // sphere.position = {x: 0, y: 1, z: 0.3};
+                var lightcolor;
+                var colparams = {
+                    lightcolor: color
+                };
+
+                this.addGUI = function () {
+
+                    let fldr = datGui.addFolder('LIGHT');
+                    fldr.add(light1.position, 'x', -.7, .7, .01);
+                    fldr.add(light1.position, 'y', .5, 1.5, .01);
+                    fldr.add(light1.position, 'z', -1.1, 1.9, .01);
+                    
+                    fldr.addColor(colparams, 'lightcolor')
+                        .name('LIGHT')
+                        .onChange(function () {
+                            light1.color.set(colparams.lightcolor);
+                            spherematerial.color.set(colparams.lightcolor);
+                        })
+
+                    fldr.add(light1, 'visible');
+                    fldr.open();
+
+                    console.info(fldr.__controllers)
+                    // console.info(fldr.updateDisplay())
+
+                }
+
+                this.visible = (visible) => {
+                    if (visible) {
+                        light1.visible = true
+                    } else {
+                        light1.visible = false
+                    }
+                }
+
+                this.lightcolor = lightcolor = color;
+
+                this.changecolor = function(newcolor) {
+                    light1.color.set(newcolor);
+                    spherematerial.color.set(newcolor);
+                }
+
+                this.setPositionXZ = (x, z) => {
+                    light1.position.x = x;
+                    light1.position.z = z + .21;
+                }
+
+                var sphere = new THREE.SphereBufferGeometry(0.01, 16, 16);
+                var spherematerial = new THREE.MeshBasicMaterial({
+                    color: lightcolor
+                });
+                var light1 = new THREE.PointLight(lightcolor, 50, 100000);
+                console.log('Date')
+                console.log(Date.now())
+                console.log(Math.sin(Date.now()))
+                light1.add(new THREE.Mesh(sphere, spherematerial));
+
+                light1.position.x = .00;
+                light1.position.y = .94;
+                light1.position.z = .21;
+
+                light1.visible = false;
+
+                scene.add(light1);
+
+            }
             
-            scene.add( light1 );
-            console.info('light1.getWorldPosition: ', light1.getWorldPosition())
 
-            light1.position.y = .94;
-            light1.position.z = .21;
-            console.info('light1.getWorldPosition: ', light1.getWorldPosition())
-
-            
-            fldr.add(light1.position, 'x', -.7, .7, .01);
-            fldr.add(light1.position, 'y', .5, 1.5, .01);
-            fldr.add(light1.position, 'z', -1.1, 1.9, .01);
-            var colparams = {lightcolor: '#FF0000'};
-            fldr.addColor(colparams, 'lightcolor')
-                .name('LIGHT')
-                .onChange(function() {
-                    light1.color.set(colparams.lightcolor);
-                    spherematerial.color.set(colparams.lightcolor);
-                })
-            // window.onload = function() {
-            //     fldr.addColor(light1, 'color');
-            // }()
-
-            
-            console.info('light1.color')
-            console.info(light1.color.setRGB)
-
-            fldr.add(light1, 'visible', false);
-            fldr.open();
-
-            
-            
 
 
         });
 
         // var loader2 = new GLTFLoader();
         // loader2.load(smazkasystem, function(gltf2) {
-            
+
         //     scene.add(gltf2.scene);
         //     console.log('gltf2.scene: ', gltf2.scene)
         //     var smz = gltf2.scene.getObjectByName('LCM_gas_tank_low001')
