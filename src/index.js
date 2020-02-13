@@ -1,6 +1,7 @@
 import './styles/styles.css'
 import smazkasystem from './assets/models/gaztank2.gltf'
 import GltfFile from './assets/models/machine.gltf'
+import AnimationPath from './assets/models/animation6.gltf'
 import hdrFile from '@assets/hdr/industrial_pipe_and_valve_01_1k.hdr'
 import * as THREE from 'three'
 import {
@@ -128,22 +129,24 @@ function init() {
             var weld = new weldingLight('#EDD175');
             weld.visible(1);
             weld.addGUI();
+            weld.setIntens(50);
+            weld.blinking();
 
 
             //----------------------------------------------------------------------------------------
 
             fldr = datGui.addFolder('BRIDGE');
             var bridgeController = fldr.add(bridge.position, 'z', -1.1, 1.9, .01);
-            // bridgeController.onChange(() => {
-            //     weld.setPositionXZ(head.position.x, bridge.position.z)
-            // })
+            bridgeController.onChange(() => {
+                weld.setPositionXZ(head.position.x, bridge.position.z)
+            })
             fldr.open();
 
             let fldr = datGui.addFolder('HEAD');
             var headController = fldr.add(head.position, 'x', -.7, .7, .01);
-            // headController.onChange(() => {
-            //     weld.setPositionXZ(head.position.x, bridge.position.z)
-            // })
+            headController.onChange(() => {
+                weld.setPositionXZ(head.position.x, bridge.position.z)
+            })
             fldr.open();
 
             fldr = datGui.addFolder('LASER HEAD');
@@ -316,7 +319,7 @@ function init() {
 
                         head.position.x = Math.round(head.position.x * 100) / 100;
 
-                        // weld.setPositionXZ(head.position.x, bridge.position.z);
+                        weld.setPositionXZ(head.position.x, bridge.position.z);
 
                         if ((Math.abs(bridge.position.z - z).toFixed(2) >= deltaZ) || (Math.abs(head.position.x - x).toFixed(2) >= deltaX)) {
 
@@ -363,6 +366,7 @@ function init() {
 
                         head.position.x += deltaX;
                         bridge.position.z += deltaZ;
+                        weld.setPositionXZ(head.position.x, bridge.position.z);
 
                         if (((Math.abs(head.position.x - x) > Math.abs(deltaX)) && (deltaX != 0)) || ((Math.abs(bridge.position.z - z) > Math.abs(deltaZ)) && (deltaZ != 0))) {
 
@@ -373,6 +377,7 @@ function init() {
 
                             head.position.x = x;
                             bridge.position.z = z;
+                            weld.setPositionXZ(head.position.x, bridge.position.z);
 
                             resolve();
 
@@ -410,7 +415,8 @@ function init() {
 
                         laserhead.position.y = Math.round(laserhead.position.y * rnDeltaY) / rnDeltaY;
 
-                        if ( laserhead.position.y <= -.065 ) {
+                        if (laserhead.position.y <= -.065) {
+                            weld.setPositionXZ(head.position.x, bridge.position.z)
                             weld.visible(1)
                         } else if (laserhead.position.y > -.065) {
                             weld.visible(0)
@@ -435,7 +441,7 @@ function init() {
 
                 });
 
-                
+
 
             }
 
@@ -479,6 +485,7 @@ function init() {
                 var colparams = {
                     lightcolor: color
                 };
+                var intens = 10;
 
                 this.addGUI = function () {
 
@@ -486,7 +493,7 @@ function init() {
                     fldr.add(light1.position, 'x', -.7, .7, .01);
                     fldr.add(light1.position, 'y', .5, 1.5, .01);
                     fldr.add(light1.position, 'z', -1.1, 1.9, .01);
-                    
+
                     fldr.addColor(colparams, 'lightcolor')
                         .name('LIGHT')
                         .onChange(function () {
@@ -498,7 +505,7 @@ function init() {
                     fldr.open();
 
                     console.info(fldr.__controllers)
-                    // console.info(fldr.updateDisplay())
+                    console.info(fldr.updateDisplay())
 
                 }
 
@@ -512,7 +519,7 @@ function init() {
 
                 this.lightcolor = lightcolor = color;
 
-                this.changecolor = function(newcolor) {
+                this.changecolor = function (newcolor) {
                     light1.color.set(newcolor);
                     spherematerial.color.set(newcolor);
                 }
@@ -522,33 +529,47 @@ function init() {
                     light1.position.z = z + .21;
                 }
 
-                var sphere = new THREE.SphereBufferGeometry(0.01, 16, 16);
+                this.setIntens = function (intens) {
+                    light1.intensity = intens
+                }
+
+                var sphere = new THREE.SphereBufferGeometry(0.005, 16, 16);
                 var spherematerial = new THREE.MeshBasicMaterial({
                     color: lightcolor
                 });
-                var light1 = new THREE.PointLight(lightcolor, 50, 100000);
+                var light1 = new THREE.PointLight(lightcolor, intens, 100000);
                 console.log('Date')
                 console.log(Date.now())
                 console.log(Math.sin(Date.now()))
                 light1.add(new THREE.Mesh(sphere, spherematerial));
 
                 light1.position.x = .00;
-                light1.position.y = .94;
+                light1.position.y = .95;
                 light1.position.z = .21;
+
+                console.info('light1 intensity: ', light1.intensity)
+
+                this.continueblink = function (isBlink = true) {
+                    return isBlink
+                }
+
+                this.blinking = function () {
+                    
+                }
 
                 light1.visible = false;
 
                 scene.add(light1);
 
             }
-            
+
 
 
 
         });
 
         // var loader2 = new GLTFLoader();
-        // loader2.load(smazkasystem, function(gltf2) {
+        // loader2.load(AnimationPath, function(gltf2) {
 
         //     scene.add(gltf2.scene);
         //     console.log('gltf2.scene: ', gltf2.scene)
