@@ -24,48 +24,52 @@ import {
 import * as dat from 'dat.gui'
 
 
-var container, canvasjs, stats, controls;
+var stats, controls;
 var camera, scene, renderer, rgbeLoader;
 let head, bridge, laserhead;
 
-///////////////////////
+// stats
+stats = new Stats();
+document.body.appendChild(stats.dom);
 
+//DAT.GUI
 const datGui = new dat.GUI({
     autoPlace: true,
     name: 'Develop GUI',
-
 })
-
-init();
 
 datGui.domElement.id = 'gui';
 
-function updateDisplay(datGui) {
-    for (var i in datGui.__controllers) {
-        datGui.__controllers[i].updateDisplay();
-    }
-    for (var f in datGui.__folders) {
-        updateDisplay(datGui.__folders[f]);
-    }
-}
+////////////////////////////////////////////
 
-animate();
+const container = document.querySelector('.canvasjs');
+init();
+
+////////////////////////////////////////////
+
+controls = new OrbitControls(camera, container);
+controls.target.set(0, 0, -1);
+
+
+window.addEventListener('resize', onWindowResize, false);
+
 
 function init() {
 
-    container = document.createElement('div');
-    container.width = 800 * window.devicePixelRatio;
-    // canvasjs = document.getElementById('canvasjs');
-    // container.id = "threescene";
-    document.body.appendChild(container);
-    container.class = "sceneididid"
-    console.info(container.class)
-    console.info(document.body)
-    console.info(window)
-    console.info(window.inn)
-    console.info('container.id: ', container.id)
-    console.info(container.innerHTML)
+    renderer = new THREE.WebGLRenderer({
+        container,
+        antialias: true
+    });
 
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.setClearColor(0xbdccc6, .1);
+    document.body.appendChild(renderer.domElement);
+
+    var pmremGenerator = new THREE.PMREMGenerator(renderer);
+    pmremGenerator.compileEquirectangularShader();
 
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.25, 100);
     camera.position.set(5, 6, 11);
@@ -102,28 +106,14 @@ function init() {
 
             scene.add(gltf.scene);
 
-            console.info('gltf.scene: ', gltf.scene)
-
             roughnessMipmapper.dispose();
 
             head = gltf.scene.getObjectByName('head');
-            // console.info(head.id);
             // console.log('Dump Obj head ...', dumpObject(head).join('\n'));
 
             bridge = gltf.scene.getObjectByName('bridge');
-            // console.info(bridge.id)
-            console.log('Dump Obj bridge ...', dumpObject(bridge).join('\n'));
 
             laserhead = gltf.scene.getObjectByName('LCM_laserhead_low');
-
-            // var baloooon = gltf.scene.getObjectByName('LCM_gas_tank_low');
-            // console.info('LCM_gas_tank_low INFO')
-            // console.info(baloooon.getWorldPosition())
-            // console.info(baloooon.getWorldQuaternion())
-            // console.info(baloooon.getWorldScale())
-            // console.info(baloooon.getWorldDirection())
-            // console.info(baloooon.toJSON())
-
 
             //создание света от сварки
             var weld = new weldingLight('#EDD175');
@@ -554,7 +544,7 @@ function init() {
                 }
 
                 this.blinking = function () {
-                    
+
                 }
 
                 light1.visible = false;
@@ -588,30 +578,6 @@ function init() {
 
     });
 
-    renderer = new THREE.WebGLRenderer({
-        antialias: true
-    });
-
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.outputEncoding = THREE.sRGBEncoding;
-    renderer.setClearColor(0xbdccc6, .1);
-
-    container.appendChild(renderer.domElement);
-
-    var pmremGenerator = new THREE.PMREMGenerator(renderer);
-    pmremGenerator.compileEquirectangularShader();
-
-    controls = new OrbitControls(camera, renderer.domElement);
-    controls.target.set(0, 0, -1);
-    controls.update();
-
-    window.addEventListener('resize', onWindowResize, false);
-
-    // stats
-    stats = new Stats();
-    container.appendChild(stats.dom);
 
 }
 
@@ -623,14 +589,25 @@ function onWindowResize() {
 
 }
 
-//
+function updateDisplay(datGui) {
+    for (var i in datGui.__controllers) {
+        datGui.__controllers[i].updateDisplay();
+    }
+    for (var f in datGui.__folders) {
+        updateDisplay(datGui.__folders[f]);
+    }
+}
 
 function animate() {
 
     updateDisplay(datGui);
-    requestAnimationFrame(animate);
-    renderer.render(scene, camera);
     controls.update();
     stats.update();
 
+    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+
 }
+
+controls.update();
+animate();
