@@ -39,6 +39,6 @@
     "fs": "0.0.1-security",
     "html-webpack-tags-plugin": "^2.0.17",
     "normalize.css": "^8.0.1",
-    "three": "^0.112.1"
+    "three": "^0.125.0"
   }
 }
